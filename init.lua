@@ -296,6 +296,11 @@ vim.pack.add({
 	"https://www.github.com/neovim/nvim-lspconfig",
 	"https://github.com/mason-org/mason.nvim",
 	"https://github.com/creativenull/efmls-configs-nvim",
+	{
+		src = "https://github.com/saghen/blink.cmp",
+		version = vim.version.range("1.*"),
+	},
+	"https://github.com/L3MON4D3/LuaSnip",
 })
 
 local function packadd(name)
@@ -310,6 +315,8 @@ packadd("gitsigns.nvim")
 packadd("nvim-lspconfig")
 packadd("mason.nvim")
 packadd("efmls-configs-nvim")
+packadd("blink.cmp")
+packadd("LuaSnip")
 
 -- ============================================================================
 -- PLUGIN CONFIGS
@@ -493,6 +500,35 @@ vim.keymap.set("n", "<leader>q", function()
 end, { desc = "Open diagnostic list" })
 
 vim.keymap.set("n", "<leader>dl", vim.diagnostic.open_float, { desc = "Show line diagnostics" })
+
+require("blink.cmp").setup({
+	keymap = {
+		preset = "none",
+		["<C-Space>"] = { "show", "hide" },
+		["<CR>"] = { "accept", "fallback" },
+		["<C-j>"] = { "select_next", "fallback" },
+		["<C-k>"] = { "select_prev", "fallback" },
+		["<Tab>"] = { "snippet_forward", "fallback" },
+		["<S-Tab>"] = { "snippet_backward", "fallback" },
+	},
+	appearance = { nerd_font_variant = "mono" },
+	completion = { menu = { auto_show = true } },
+	sources = { default = { "lsp", "path", "buffer", "snippets" } },
+	snippets = {
+		expand = function(snippet)
+			require("luasnip").lsp_expand(snippet)
+		end,
+	},
+
+	fuzzy = {
+		implementation = "prefer_rust",
+		prebuilt_binaries = { download = true },
+	},
+})
+
+vim.lsp.config["*"] = {
+	capabilities = require("blink.cmp").get_lsp_capabilities(),
+}
 
 vim.lsp.config("lua_ls", {
 	settings = {
