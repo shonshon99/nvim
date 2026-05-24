@@ -198,6 +198,8 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 -- ============================================================================
 vim.pack.add({
   { src = "https://github.com/catppuccin/nvim", name = "catppuccin" },
+  "https://www.github.com/lewis6991/gitsigns.nvim",
+  "https://www.github.com/echasnovski/mini.nvim",
 	"https://www.github.com/nvim-tree/nvim-tree.lua",
   "https://www.github.com/ibhagwan/fzf-lua",
   {
@@ -214,10 +216,18 @@ packadd("nvim-treesitter")
 packadd("fzf-lua")
 packadd("nvim-tree.lua")
 packadd("catppuccin")
+packadd("mini.nvim")
+packadd("gitsigns.nvim")
 
 -- ============================================================================
 -- PLUGIN CONFIGS
 -- ============================================================================
+
+-- catppuccin theme
+require("catppuccin").setup({
+  flavour = "mocha", -- latte | frappe | macchiato | mocha
+})
+vim.cmd.colorscheme("catppuccin")
 
 -- nvim-tree
 require("nvim-tree").setup({
@@ -246,8 +256,36 @@ vim.keymap.set("n", "<leader>fg", function()
 	require("fzf-lua").live_grep()
 end, { desc = "FZF Live Grep" })
 
--- catppuccin theme
-require("catppuccin").setup({
-  flavour = "mocha", -- latte | frappe | macchiato | mocha
+-- mini.nvim
+require("mini.surround").setup({})
+require("mini.indentscope").setup({})
+require("mini.trailspace").setup({})
+require("mini.pairs").setup({})
+require("mini.icons").setup({})
+
+-- gitsigns
+require("gitsigns").setup({
+	signs = {
+		add = { text = "\u{2590}" }, -- ▏
+		change = { text = "\u{2590}" }, -- ▐
+		delete = { text = "\u{2590}" }, -- ◦
+		topdelete = { text = "\u{25e6}" }, -- ◦
+		changedelete = { text = "\u{25cf}" }, -- ●
+		untracked = { text = "\u{25cb}" }, -- ○
+	},
+	signcolumn = true,
+	current_line_blame = false,
 })
-vim.cmd.colorscheme("catppuccin")
+
+vim.keymap.set("n", "<leader>hs", function()
+	require("gitsigns").stage_hunk()
+end, { desc = "Hunk stage" })
+vim.keymap.set("n", "<leader>rb", function()
+	require("gitsigns").reset_hunk()
+end, { desc = "Hunk rollback" })
+vim.keymap.set("n", "<leader>hp", function()
+	require("gitsigns").preview_hunk()
+end, { desc = "Hunk preview" })
+vim.keymap.set("n", "<leader>hd", function()
+	require("gitsigns").diffthis()
+end, { desc = "Hunk diff" })
