@@ -185,6 +185,91 @@ setup_dynamic_statusline()
 
 local augroup = vim.api.nvim_create_augroup("UserConfig", { clear = true })
 
+-- Format on save (ONLY real file buffers, ONLY when efm is attached)
+vim.api.nvim_create_autocmd("BufWritePre", {
+	group = augroup,
+	pattern = {
+		"*.lua",
+		"*.py",
+		"*.go",
+		"*.js",
+		"*.jsx",
+		"*.ts",
+		"*.tsx",
+		"*.json",
+		"*.css",
+		"*.scss",
+		"*.html",
+		"*.sh",
+		"*.bash",
+		"*.zsh",
+		"*.c",
+		"*.cpp",
+		"*.h",
+		"*.hpp",
+	},
+	callback = function(args)
+		-- avoid formatting non-file buffers (helps prevent weird write prompts)
+		if vim.bo[args.buf].buftype ~= "" then
+			return
+		end
+		if not vim.bo[args.buf].modifiable then
+			return
+		end
+		if vim.api.nvim_buf_get_name(args.buf) == "" then
+			return
+		end
+
+		local has_efm = false
+		for _, c in ipairs(vim.lsp.get_clients({ bufnr = args.buf })) do
+			if c.name == "efm" then
+				has_efm = true
+				break
+			end
+		end
+		if not has_efm then
+			return
+		end
+
+		pcall(vim.lsp.buf.format, {
+			bufnr = args.buf,
+			timeout_ms = 2000,
+			filter = function(c)
+				return c.name == "efm"
+			end,
+		})
+	end,
+})
+
+-- highlight yanked text
+vim.api.nvim_create_autocmd("TextYankPost", {
+	group = augroup,
+	callback = function()
+		vim.hl.on_yank()
+	end,
+})
+
+-- return to last cursor position
+vim.api.nvim_create_autocmd("BufReadPost", {
+	group = augroup,
+	desc = "Restore last cursor position",
+	callback = function()
+		if vim.o.diff then -- except in diff mode
+			return
+		end
+
+		local last_pos = vim.api.nvim_buf_get_mark(0, '"') -- {line, col}
+		local last_line = vim.api.nvim_buf_line_count(0)
+
+		local row = last_pos[1]
+		if row < 1 or row > last_line then
+			return
+		end
+
+		pcall(vim.api.nvim_win_set_cursor, 0, last_pos)
+	end,
+})
+
 -- highlight yanked text
 vim.api.nvim_create_autocmd("TextYankPost", {
 	group = augroup,
@@ -197,20 +282,24 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 -- PLUGINS (vim.pack)
 -- ============================================================================
 vim.pack.add({
-  { src = "https://github.com/catppuccin/nvim", name = "catppuccin" },
-  "https://www.github.com/lewis6991/gitsigns.nvim",
-  "https://www.github.com/echasnovski/mini.nvim",
+	{ src = "https://github.com/catppuccin/nvim", name = "catppuccin" },
+	"https://www.github.com/lewis6991/gitsigns.nvim",
+	"https://www.github.com/echasnovski/mini.nvim",
 	"https://www.github.com/nvim-tree/nvim-tree.lua",
-  "https://www.github.com/ibhagwan/fzf-lua",
-  {
+	"https://www.github.com/ibhagwan/fzf-lua",
+	{
 		src = "https://github.com/nvim-treesitter/nvim-treesitter",
 		branch = "main",
 		build = ":TSUpdate",
-	}
+	},
+	-- Language Server Protocols
+	"https://www.github.com/neovim/nvim-lspconfig",
+	"https://github.com/mason-org/mason.nvim",
+	"https://github.com/creativenull/efmls-configs-nvim",
 })
 
 local function packadd(name)
-  vim.cmd("packadd " .. name)
+	vim.cmd("packadd " .. name)
 end
 packadd("nvim-treesitter")
 packadd("fzf-lua")
@@ -218,6 +307,9 @@ packadd("nvim-tree.lua")
 packadd("catppuccin")
 packadd("mini.nvim")
 packadd("gitsigns.nvim")
+packadd("nvim-lspconfig")
+packadd("mason.nvim")
+packadd("efmls-configs-nvim")
 
 -- ============================================================================
 -- PLUGIN CONFIGS
@@ -225,7 +317,7 @@ packadd("gitsigns.nvim")
 
 -- catppuccin theme
 require("catppuccin").setup({
-  flavour = "mocha", -- latte | frappe | macchiato | mocha
+	flavour = "mocha", -- latte | frappe | macchiato | mocha
 })
 vim.cmd.colorscheme("catppuccin")
 
@@ -242,8 +334,8 @@ require("nvim-tree").setup({
 	},
 })
 
-vim.keymap.set("n", "<leader>e", function() 
-  require("nvim-tree.api").tree.toggle() 
+vim.keymap.set("n", "<leader>e", function()
+	require("nvim-tree.api").tree.toggle()
 end, { desc = "Toggle NvimTree" })
 
 -- fzf-lua
@@ -289,3 +381,144 @@ end, { desc = "Hunk preview" })
 vim.keymap.set("n", "<leader>hd", function()
 	require("gitsigns").diffthis()
 end, { desc = "Hunk diff" })
+
+-- Mason
+require("mason").setup({})
+vim.env.PATH = vim.fn.stdpath("data") .. "/mason/bin:" .. vim.env.PATH
+
+-- ============================================================================
+-- LSP, Linting, Formatting & Completion
+-- ============================================================================
+local diagnostic_signs = {
+	Error = " ",
+	Warn = " ",
+	Hint = "",
+	Info = "",
+}
+
+vim.diagnostic.config({
+	virtual_text = { prefix = "●", spacing = 4 },
+	signs = {
+		text = {
+			[vim.diagnostic.severity.ERROR] = diagnostic_signs.Error,
+			[vim.diagnostic.severity.WARN] = diagnostic_signs.Warn,
+			[vim.diagnostic.severity.INFO] = diagnostic_signs.Info,
+			[vim.diagnostic.severity.HINT] = diagnostic_signs.Hint,
+		},
+	},
+	underline = true,
+	update_in_insert = false,
+	severity_sort = true,
+	float = {
+		border = "rounded",
+		source = true,
+		header = "",
+		prefix = "",
+		focusable = false,
+		style = "minimal",
+	},
+})
+
+local function lsp_on_attach(ev)
+	local client = vim.lsp.get_client_by_id(ev.data.client_id)
+	if not client then
+		return
+	end
+
+	local bufnr = ev.buf
+	local opts = { noremap = true, silent = true, buffer = bufnr }
+
+	vim.keymap.set("n", "<leader>gd", function()
+		require("fzf-lua").lsp_definitions({ jump_to_single_result = true })
+	end, opts)
+
+	vim.keymap.set("n", "<leader>gD", vim.lsp.buf.definition, opts)
+
+	vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
+	vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
+
+	vim.keymap.set("n", "<leader>D", function()
+		vim.diagnostic.open_float({ scope = "line" })
+	end, opts)
+	vim.keymap.set("n", "<leader>d", function()
+		vim.diagnostic.open_float({ scope = "cursor" })
+	end, opts)
+	vim.keymap.set("n", "<leader>nd", function()
+		vim.diagnostic.jump({ count = 1 })
+	end, opts)
+
+	vim.keymap.set("n", "<leader>pd", function()
+		vim.diagnostic.jump({ count = -1 })
+	end, opts)
+
+	vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+
+	vim.keymap.set("n", "<leader>fd", function()
+		require("fzf-lua").lsp_definitions({ jump_to_single_result = true })
+	end, opts)
+	vim.keymap.set("n", "<leader>fr", function()
+		require("fzf-lua").lsp_references()
+	end, opts)
+	vim.keymap.set("n", "<leader>ft", function()
+		require("fzf-lua").lsp_typedefs()
+	end, opts)
+	vim.keymap.set("n", "<leader>fs", function()
+		require("fzf-lua").lsp_document_symbols()
+	end, opts)
+	vim.keymap.set("n", "<leader>fw", function()
+		require("fzf-lua").lsp_workspace_symbols()
+	end, opts)
+	vim.keymap.set("n", "<leader>fi", function()
+		require("fzf-lua").lsp_implementations()
+	end, opts)
+
+	if client:supports_method("textDocument/codeAction", bufnr) then
+		vim.keymap.set("n", "<leader>oi", function()
+			vim.lsp.buf.code_action({
+				context = { only = { "source.organizeImports" }, diagnostics = {} },
+				apply = true,
+				bufnr = bufnr,
+			})
+			vim.defer_fn(function()
+				vim.lsp.buf.format({ bufnr = bufnr })
+			end, 50)
+		end, opts)
+	end
+end
+
+vim.api.nvim_create_autocmd("LspAttach", { group = augroup, callback = lsp_on_attach })
+
+vim.keymap.set("n", "<leader>q", function()
+	vim.diagnostic.setloclist({ open = true })
+end, { desc = "Open diagnostic list" })
+
+vim.keymap.set("n", "<leader>dl", vim.diagnostic.open_float, { desc = "Show line diagnostics" })
+
+vim.lsp.config("lua_ls", {
+	settings = {
+		Lua = {
+			diagnostics = { globals = { "vim" } },
+			telemetry = { enable = false },
+		},
+	},
+})
+
+do
+	local luacheck = require("efmls-configs.linters.luacheck")
+	local stylua = require("efmls-configs.formatters.stylua")
+
+	vim.lsp.config("efm", {
+		filetypes = { "lua" },
+		init_options = { documentFormatting = true },
+		settings = {
+			languages = {
+				lua = { luacheck, stylua },
+			},
+		},
+	})
+end
+
+vim.lsp.enable({
+	"lua_ls",
+	"efm",
+})
