@@ -329,7 +329,7 @@ require("nvim-tree").setup({
 	},
 })
 
-vim.keymap.set("n", "<leader>e", function()
+vim.keymap.set("n", "<C-p>", function()
 	require("nvim-tree.api").tree.toggle()
 end, { desc = "Toggle NvimTree" })
 
@@ -369,18 +369,15 @@ require("gitsigns").setup({
 	current_line_blame = false,
 })
 
-vim.keymap.set("n", "<leader>hs", function()
+vim.keymap.set("n", "<leader>sh", function()
 	require("gitsigns").stage_hunk()
-end, { desc = "Hunk stage" })
+end, { desc = "Stage Hunk" })
 vim.keymap.set("n", "<leader>rb", function()
 	require("gitsigns").reset_hunk()
-end, { desc = "Hunk rollback" })
-vim.keymap.set("n", "<leader>hp", function()
+end, { desc = "Rollback Hunk" })
+vim.keymap.set("n", "<leader>p", function()
 	require("gitsigns").preview_hunk()
-end, { desc = "Hunk preview" })
-vim.keymap.set("n", "<leader>hd", function()
-	require("gitsigns").diffthis()
-end, { desc = "Hunk diff" })
+end, { desc = "Preview Hunk" })
 
 -- Mason
 require("mason").setup({})
