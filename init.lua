@@ -92,6 +92,7 @@ local function file_type()
 		vue = "\u{fd42} ", -- nf-md-vuejs
 		svelte = "\u{e697} ",
 		astro = "\u{e628} ",
+		zig = "\u{e6a9} ", -- nf-seti-zig
 	}
 
 	if ft == "" then
@@ -192,21 +193,8 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 		"*.lua",
 		"*.py",
 		"*.go",
-		"*.js",
-		"*.jsx",
-		"*.ts",
-		"*.tsx",
-		"*.json",
-		"*.css",
-		"*.scss",
-		"*.html",
-		"*.sh",
-		"*.bash",
-		"*.zsh",
-		"*.c",
-		"*.cpp",
-		"*.h",
-		"*.hpp",
+		"*.zig",
+		"*.zon",
 	},
 	callback = function(args)
 		-- avoid formatting non-file buffers (helps prevent weird write prompts)
@@ -220,14 +208,17 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 			return
 		end
 
-		local has_efm = false
+		local ft = vim.bo[args.buf].filetype
+		local formatter_name = ft == "zig" and "zls" or "efm"
+
+		local has_formatter = false
 		for _, c in ipairs(vim.lsp.get_clients({ bufnr = args.buf })) do
-			if c.name == "efm" then
-				has_efm = true
+			if c.name == formatter_name then
+				has_formatter = true
 				break
 			end
 		end
-		if not has_efm then
+		if not has_formatter then
 			return
 		end
 
@@ -235,7 +226,7 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 			bufnr = args.buf,
 			timeout_ms = 2000,
 			filter = function(c)
-				return c.name == "efm"
+				return c.name == formatter_name
 			end,
 		})
 	end,
@@ -564,5 +555,6 @@ end
 
 vim.lsp.enable({
 	"lua_ls",
+	"zls",
 	"efm",
 })
