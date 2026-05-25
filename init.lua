@@ -425,11 +425,11 @@ local function lsp_on_attach(ev)
 	local bufnr = ev.buf
 	local opts = { noremap = true, silent = true, buffer = bufnr }
 
-	vim.keymap.set("n", "<leader>gd", function()
-		require("fzf-lua").lsp_definitions({ jump_to_single_result = true })
+	vim.keymap.set("n", "gd", function()
+		require("fzf-lua").lsp_definitions({ jump1 = true })
 	end, opts)
 
-	vim.keymap.set("n", "<leader>gD", vim.lsp.buf.definition, opts)
+	-- vim.keymap.set("n", "gD", vim.lsp.buf.definition, opts)
 
 	vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
 	vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
@@ -456,10 +456,7 @@ local function lsp_on_attach(ev)
 		})
 	end, opts)
 
-	vim.keymap.set("n", "<leader>fd", function()
-		require("fzf-lua").lsp_definitions({ jump_to_single_result = true })
-	end, opts)
-	vim.keymap.set("n", "<leader>fr", function()
+	vim.keymap.set("n", "gD", function()
 		require("fzf-lua").lsp_references()
 	end, opts)
 	vim.keymap.set("n", "<leader>ft", function()
