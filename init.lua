@@ -320,6 +320,11 @@ require("catppuccin").setup({
 })
 vim.cmd.colorscheme("catppuccin")
 
+-- LSP/diagnostic float popup styling
+vim.api.nvim_set_hl(0, "NormalFloat", { bg = "#181825" })
+vim.api.nvim_set_hl(0, "FloatBorder", { fg = "#89b4fa", bg = "#181825" })
+vim.api.nvim_set_hl(0, "FloatTitle", { fg = "#f5c2e7", bg = "#181825", bold = true })
+
 -- nvim-tree
 require("nvim-tree").setup({
 	view = {
@@ -455,7 +460,13 @@ local function lsp_on_attach(ev)
 		vim.diagnostic.jump({ count = -1 })
 	end, opts)
 
-	vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+	vim.keymap.set("n", "K", function()
+		vim.lsp.buf.hover({
+			border = "rounded",
+			max_width = 80,
+			max_height = 20,
+		})
+	end, opts)
 
 	vim.keymap.set("n", "<leader>fd", function()
 		require("fzf-lua").lsp_definitions({ jump_to_single_result = true })
