@@ -32,6 +32,8 @@ vim.keymap.set("v", "<C-k>", ":m '<-2<CR>gv=gv", { desc = "Move selection up" })
 vim.keymap.set("v", "<", "<gv", { desc = "Indent left and reselect" })
 vim.keymap.set("v", ">", ">gv", { desc = "Indent right and reselect" })
 
+vim.keymap.set("n", "<leader>l", "<cmd>nohlsearch<CR>", { desc = "Clear search highlight" })
+
 -- ============================================================================
 -- STATUSLINE
 -- ============================================================================
