@@ -349,7 +349,12 @@ end, { desc = "FZF Live Grep" })
 
 -- mini.nvim
 require("mini.surround").setup({})
-require("mini.indentscope").setup({})
+require("mini.indentscope").setup({
+	draw = {
+		delay = 0,
+		animation = require("mini.indentscope").gen_animation.none(),
+	},
+})
 require("mini.trailspace").setup({})
 require("mini.pairs").setup({})
 require("mini.icons").setup({})
