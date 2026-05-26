@@ -286,6 +286,7 @@ vim.pack.add({
 		version = vim.version.range("1.*"),
 	},
 	"https://github.com/L3MON4D3/LuaSnip",
+	"https://github.com/christoomey/vim-tmux-navigator",
 })
 
 local function packadd(name)
@@ -302,6 +303,7 @@ packadd("mason.nvim")
 packadd("efmls-configs-nvim")
 packadd("blink.cmp")
 packadd("LuaSnip")
+packadd("vim-tmux-navigator")
 
 -- ============================================================================
 -- PLUGIN CONFIGS
