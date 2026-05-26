@@ -242,6 +242,17 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 	end,
 })
 
+-- wrap lines for markdown
+vim.api.nvim_create_autocmd("FileType", {
+	group = augroup,
+	pattern = { "markdown" },
+	callback = function()
+		vim.opt_local.wrap = true
+		vim.opt_local.linebreak = true
+		vim.opt_local.breakindent = true
+	end,
+})
+
 -- return to last cursor position
 vim.api.nvim_create_autocmd("BufReadPost", {
 	group = augroup,
@@ -287,6 +298,7 @@ vim.pack.add({
 	},
 	"https://github.com/L3MON4D3/LuaSnip",
 	"https://github.com/christoomey/vim-tmux-navigator",
+	"https://github.com/OXY2DEV/markview.nvim",
 })
 
 local function packadd(name)
@@ -304,6 +316,7 @@ packadd("efmls-configs-nvim")
 packadd("blink.cmp")
 packadd("LuaSnip")
 packadd("vim-tmux-navigator")
+packadd("markview.nvim")
 
 -- ============================================================================
 -- PLUGIN CONFIGS
@@ -556,3 +569,14 @@ vim.lsp.enable({
 	"zls",
 	"efm",
 })
+
+-- markview
+require("markview").setup({
+	preview = {
+		icon_provider = "mini",
+		modes = { "n", "no", "c" },
+		hybrid_modes = { "n" },
+	},
+})
+
+vim.keymap.set("n", "<leader>mp", "<cmd>Markview Toggle<CR>", { desc = "Toggle markview preview" })
