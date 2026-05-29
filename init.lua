@@ -333,6 +333,10 @@ vim.api.nvim_set_hl(0, "NormalFloat", { bg = "#181825" })
 vim.api.nvim_set_hl(0, "FloatBorder", { fg = "#89b4fa", bg = "#181825" })
 vim.api.nvim_set_hl(0, "FloatTitle", { fg = "#f5c2e7", bg = "#181825", bold = true })
 
+-- icon provider for nvim-tree (mini.icons impersonates nvim-web-devicons)
+require("mini.icons").setup({})
+require("mini.icons").mock_nvim_web_devicons()
+
 -- nvim-tree
 require("nvim-tree").setup({
 	view = {
@@ -370,7 +374,6 @@ require("mini.indentscope").setup({
 })
 require("mini.trailspace").setup({})
 require("mini.pairs").setup({})
-require("mini.icons").setup({})
 
 -- gitsigns
 require("gitsigns").setup({
